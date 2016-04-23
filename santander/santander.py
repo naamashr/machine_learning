@@ -27,7 +27,7 @@ from sklearn.neighbors import KNeighborsClassifier
 
 #import xgboost as xgb
 
-class Data(object):
+class Data():
 
     def __init__(self, pathTO,submit=0):
        
@@ -41,10 +41,12 @@ class Data(object):
         self.submit=submit
     
     def read_file(self):
+        
         X= pd.read_csv(self.path)
         if(self.submit):
           self.real_test_x= pd.read_csv('C:\\Temp\\test.csv')
-        return X  
+        return X 
+        
     def divide_data(self,X,train_size,test_size):  
         
         self.X_train, self.X_test= train_test_split(X,train_size=train_size,test_size=test_size,random_state=100)        
@@ -60,6 +62,7 @@ class Data(object):
         else:
             self.y_test=self.X_test['TARGET'] 
             self.X_test=self.X_test.drop(["ID","TARGET"],axis=1) 
+            
     def change_values_of_feature(self,value,new_value,feature_name):
         ###in var 3 replace -999999 in the mean value 2.71
         self.X_train[feature_name].replace(value,new_value,inplace=True)
@@ -68,6 +71,7 @@ class Data(object):
           self.real_test_x[feature_name].replace(value,new_value,inplace=True)
         
     def univariant_feature_selection(self,method, X, y,percentile):
+        
         test=SelectPercentile(method , percentile=percentile).fit(X, y)
         print("The number of feature in ", method, " is: ", (test.get_support().sum()) )
         for i in range(len(self.X_train.columns)):
@@ -76,19 +80,21 @@ class Data(object):
         return  test.get_support()  
         
     def pca_feature_selection(self,num_of_features_to_keep):
-       #pca = PCA(n_components=num_of_features_to_keep)
+        
         pca = PCA(n_components=num_of_features_to_keep)
         train_pca=pca.fit_transform(normalize(self.X_train,axis=0),self.y_train )
         test_pca=pca.transform(normalize(self.X_test))
         return ([train_pca,test_pca])
         
     def add_pca_features(self,num_of_features_to_keep,pca_train_features,pca_test_features):
+        
         for i in range(num_of_features_to_keep):
             feature_name="pca%d"  % i
             self.add_features(pca_train_features[:,i],feature_name ,self.X_train)
             self.add_features(pca_test_features[:,i],feature_name,self.X_test)
             
     def add_features(self,feature_to_add,feature_name,df):
+        
         df[feature_name]=feature_to_add
         
     def clean_data(self):
@@ -98,8 +104,7 @@ class Data(object):
         self.build_a_new_mat(ind_arr)
         
         return ind_arr   
-       
-      
+         
     def feature_selection(self,percentile):
         final_arr=[]
         ind_arr2=[]
@@ -121,9 +126,7 @@ class Data(object):
         print(self.X_test.shape)
         if(self.submit==0):
             print(self.y_test.shape)    
-            
-    
-            
+                    
     def find_non_const_ind(self):
         
         ind_arr=[] 
@@ -149,6 +152,7 @@ class Data(object):
             ind_arr.remove(tmp_arr[i])
                      
         return ind_arr 
+        
     def remove_equal_features(self,ind_arr):
      
         arr_to_del=[]
@@ -164,7 +168,8 @@ class Data(object):
         for i in range(len(tmp_arr)):
             ind_arr.remove(tmp_arr[i])
                      
-        return ind_arr    
+        return ind_arr  
+        
     def find_non_sparse_ind1(self,percent):
         ind_arr=[]
         num_of_non_sparse=(percent*len(self.y_train.nonzero()[0]))
@@ -177,46 +182,45 @@ class Data(object):
                  ind_arr.append(i)
         return ind_arr 
 
-
-
-class ManageLearning(object):
-        def __init__(self,X_train,X_test,y_train,y_test,check_flag):
-            self.res_matrix_train=DataFrame()
-            self.res_matrix_test=DataFrame()
-            self.X_train=X_train
-            self.X_test=X_test
-            self.y_train=y_train
-            self.y_test=y_test
-            self.check_flag=check_flag
-            
-        def learn_model(self,model,model_name,probabilty_flag):
-            learn=Learn(model)
-            [self.res_matrix_test[model_name],self.res_matrix_train[model_name]]=learn.classify(self.X_train,self.y_train,self.X_test,self.y_test,probabilty_flag,self.check_flag)
-            return self.res_matrix_test[model_name]
-            
-        def combine_results(self,model,probabilty_flag,check_flag):
-            learn=Learn(model)
-            y_test_pred=learn.classify(self.res_matrix_train,self.y_train,self.res_matrix_test,self.y_test,probabilty_flag,self.check_flag)[0]
-            return y_test_pred
-            
-        def submission(self,y_test_pred,real_test_x):
+class ManageLearning():
+    
+    def __init__(self,X_train,X_test,y_train,y_test,check_flag):
         
-            sub = DataFrame()
-            sub["ID"] = real_test_x["ID"]
-            sub["TARGET"] = y_test_pred
-            sub.to_csv('C:\\Temp\\santander.csv', index=False)
+        self.res_matrix_train=DataFrame()
+        self.res_matrix_test=DataFrame()
+        self.X_train=X_train
+        self.X_test=X_test
+        self.y_train=y_train
+        self.y_test=y_test
+        self.check_flag=check_flag
+        
+    def learn_model(self,model,model_name,probabilty_flag):
+        learn=Learn(model)
+        [self.res_matrix_test[model_name],self.res_matrix_train[model_name]]=learn.classify(self.X_train,self.y_train,self.X_test,self.y_test,probabilty_flag,self.check_flag)
+        return self.res_matrix_test[model_name]
+        
+    def combine_results(self,model,probabilty_flag,check_flag):
+        learn=Learn(model)
+        y_test_pred=learn.classify(self.res_matrix_train,self.y_train,self.res_matrix_test,self.y_test,probabilty_flag,self.check_flag)[0]
+        return y_test_pred
+        
+    def submission(self,y_test_pred,real_test_x):
+    
+        sub = DataFrame()
+        sub["ID"] = real_test_x["ID"]
+        sub["TARGET"] = y_test_pred
+        sub.to_csv('C:\\Temp\\santander.csv', index=False)
 
-class Learn(object):
+class Learn():
+    
     def __init__(self, model = KNeighborsClassifier):
         
-       
-       
         self.most_important_features=[]
        
         self.model = model
 
-   
     def __plot_auc(self,arr_true, arr_predict):
+        
         fpr, tpr, _ = met.roc_curve(arr_true, arr_predict)
         roc_auc = met.auc(fpr, tpr)
         print ("the auc is: :",roc_auc )
@@ -232,11 +236,14 @@ class Learn(object):
         plt.show()
     
     def calc_auc(arr_true, arr_predict):
+        
         fpr, tpr, _ = met.roc_curve(arr_true, arr_predict)
         roc_auc = met.auc(fpr, tpr)
         print ("the auc is: :",roc_auc )
         return roc_auc
+        
     def __check_results(self,arr_predict, arr_true):
+        
         label_pred= (arr_predict+0.5).astype(int)
         print(met.classification_report(arr_true,label_pred))
         print(met.confusion_matrix(arr_true, label_pred))
@@ -268,7 +275,7 @@ class Learn(object):
         print(self.y_test_pred)
         print(data.y_test)
 
-    def  learn_logistic(self,check_flag):
+    def learn_logistic(self,check_flag):
         
          model=LogisticRegression(class_weight={0:0.2, 1:0.8}) 
          model.fit(data.X_train, data.y_train)
@@ -277,9 +284,9 @@ class Learn(object):
          self.res_matrix_train["logistic"]=model.predict_proba(data.X_train)[:,1]
          if(check_flag==1):
              self.check_results(self.y_test_pred[:,1], data.y_test)
-           
-             
+                   
     def learn_adaboost(self,check_flag):
+        
           model = AdaBoostClassifier(
                          learning_rate=0.1,
                          n_estimators=500)
@@ -292,17 +299,19 @@ class Learn(object):
               self.check_results(self.y_test_pred[:,1], data.y_test)
                 
     def learn_gradboost(self,check_flag):
-          model = GradientBoostingClassifier(n_estimators=400, learning_rate=0.03,max_depth=5, random_state=0)
-
-          model.fit(data.X_train, data.y_train)               
-          self.y_test_pred=model.predict_proba(data.X_test)
-          self.res_matrix_test["gradboost"]=self.y_test_pred[:,1]
-          self.res_matrix_train["gradboost"]=model.predict_proba(data.X_train)[:,1]
-          if(check_flag==1):
-              self.check_results(self.y_test_pred[:,1], data.y_test)          
-          
-          
-  
+        '''
+        This function
+        
+        '''
+        model = GradientBoostingClassifier(n_estimators=400, learning_rate=0.03,max_depth=5, random_state=0)
+        
+        model.fit(data.X_train, data.y_train)               
+        self.y_test_pred=model.predict_proba(data.X_test)
+        self.res_matrix_test["gradboost"]=self.y_test_pred[:,1]
+        self.res_matrix_train["gradboost"]=model.predict_proba(data.X_train)[:,1]
+        if(check_flag==1):
+            self.check_results(self.y_test_pred[:,1], data.y_test)          
+            
 if __name__ == '__main__':       
     import pdb
     pdb.set_trace()        

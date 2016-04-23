@@ -11,6 +11,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.ensemble import GradientBoostingClassifier
 import numpy as np
+
 class CreateData(unittest.TestCase):
       def setUp(self):
           submit=0  
@@ -43,12 +44,11 @@ class TestStringMethods(CreateData):
        
         ind=self.data.feature_selection(10,0)
         self.data.build_a_new_mat(ind)
-      
-         
         self.assertEqual(self.data.X_train.shape[1],len(ind) )
         self.assertEqual(self.data.X_test.shape[1], len(ind) )
      
     def test_change_values_of_feature(self):
+        
         val=-999999
         new_val=2.71
         feature_name="var3"
@@ -59,6 +59,7 @@ class TestStringMethods(CreateData):
         self.assertEqual(sum(self.data.X_train[feature_name].values==new_val),count+count_new ) 
         
     def learn_model_test(self):
+        
         check_flag=1
         probabilty_flag=1
         model=AdaBoostClassifier(n_estimators=400, learning_rate=0.03)
