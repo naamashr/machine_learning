@@ -16,11 +16,12 @@ class CreateData(unittest.TestCase):
       def setUp(self):
           submit=0  
           p='C:\\Temp\\train.csv'
-          self.data=santander.Data(p,submit)
-          self.X=self.data.read_file()
-          self.train_size=100
-          self.test_size=100
-          self.data.divide_data(self.X,self.train_size,self.test_size)
+          self.dataprep=santander.DataCreate(p,submit)
+          self.X=self.dataprep.read_file()
+          self.train_size=10000
+          self.test_size=10000
+          self.data=santander.Data()
+          self.dataprep.divide_data(self.X,self.train_size,self.test_size,self.data,100)
           
 class TestStringMethods(CreateData):
     
@@ -33,7 +34,7 @@ class TestStringMethods(CreateData):
       
         self.train_size=100
         self.test_size=100
-        self.data.divide_data(self.X,self.train_size,self.test_size)
+        self.data.divide_data(self.X,self.train_size,self.test_size,self.data,100)
         self.assertEqual(self.data.X_train.shape, (self.train_size, 369))
         self.assertEqual(self.data.X_test.shape, (self.test_size, 369))
         self.assertEqual(self.data.y_train.shape, (self.train_size,))
@@ -41,9 +42,9 @@ class TestStringMethods(CreateData):
         
     def test_data_build_a_new_mat(self):
         
-       
-        ind=self.data.feature_selection(10,0)
-        self.data.build_a_new_mat(ind)
+        prep=santander.PreprocessData(self.data)
+        ind=prep.feature_selection(10,0)
+        prep.build_a_new_mat(ind)
         self.assertEqual(self.data.X_train.shape[1],len(ind) )
         self.assertEqual(self.data.X_test.shape[1], len(ind) )
      
@@ -54,7 +55,9 @@ class TestStringMethods(CreateData):
         feature_name="var3"
         count=sum(self.data.X_train[feature_name].values==val)
         count_new=sum(self.data.X_train[feature_name].values==new_val)
-        self.data.change_values_of_feature(val,new_val,feature_name)
+       
+        prep=santander.PreprocessData(self.data)
+        prep.change_values_of_feature(val,new_val,feature_name)
         self.assertEqual(sum(self.data.X_train[feature_name].values==val),0 ) 
         self.assertEqual(sum(self.data.X_train[feature_name].values==new_val),count+count_new ) 
         
@@ -64,12 +67,31 @@ class TestStringMethods(CreateData):
         probabilty_flag=1
         model=AdaBoostClassifier(n_estimators=400, learning_rate=0.03)
         learn=santander.Learn(model)
-        [test_pred,train_pred]=learn.classify(self.data.X_train,self.data.y_train,self.data.X_test,self.data.y_test,probabilty_flag,check_flag)
+        [test_pred,train_pred]=learn.classify(self.data,probabilty_flag,check_flag)
         self.assertEqual(len(test_pred),self.test_size)
         self.assertEqual(len(train_pred),self.train_size)
         if(probabilty_flag):
             self.assertTrue((np.logical_and(train_pred>=0,train_pred<=1)).all)
             self.assertTrue((np.logical_and(test_pred>=0,test_pred<=1)).all)
+            
+    def check_model_test(self):
+        train_size=100
+        test_size=train_size
+        self.dataprep.divide_data(self.X,train_size,test_size,self.data,100)
+            
+        mu=[10,100] # mean
+        sigma=0.001 #std
+        for i in range(train_size):
+         self.data.X_train.iloc[i]=np.random.normal(mu[self.data.y_train.iloc[i]], sigma, self.data.X_train.shape[1])  
+         self.data.X_test.iloc[i]=np.random.normal(mu[self.data.y_test.iloc[i]], sigma, self.data.X_test.shape[1])  
+            
+        check_flag=1
+        probabilty_flag=1
+        model=LogisticRegression(class_weight={0:0.2, 1:0.8})
+        learn=santander.Learn(model)
+        [test_pred,train_pred]=learn.classify(self.data,probabilty_flag,check_flag)
+        roc_auc=learn.calc_auc(self.data.y_test,test_pred)
+        self.assertEqual(roc_auc,1 )      
             
 def run_single_test(testname):
     suite = unittest.TestSuite()
