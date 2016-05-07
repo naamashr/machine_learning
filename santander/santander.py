@@ -34,15 +34,6 @@ from sklearn.neighbors import KNeighborsClassifier
 
 class Data():
     
-       
-        
-#    def __init__(self,X_train,y_train,X_test,y_test):
-#        
-#        self.X_train=X_train
-#        self.X_test=X_test
-#        self.y_train=y_train
-#        self.y_test=y_test
-#        
     def __init__(self):
         
         self.X_train=[]
@@ -56,11 +47,9 @@ class Data():
         self.y_train=y_train
         self.y_test=y_test
         
-        
-        
 class DataCreate():
 
-    def __init__(self, pathTO,submit=0):
+    def __init__(self, pathTO, submit=0):
        
         self.real_test_x=[]
         self.path=pathTO
@@ -68,13 +57,11 @@ class DataCreate():
         self.columns=[]
         self.submit=submit
     
-    ##############################
-    # Name: read_file
-    # Inputs: none
-    # Outputs: X- the csv as a pandas dataframe
-    # Description:  read a csv file with a given path and return the data as a pandas df  
-    ##############################
     def read_file(self):
+        '''
+        Outputs: X- the csv as a pandas dataframe
+        Description: read a csv file with a given path and return the data as a pandas df  
+        '''
         
         X= pd.read_csv(self.path)
         if(self.submit):
@@ -125,9 +112,9 @@ class DataCreate():
 class PreprocessData():
     
     def __init__(self, data):
-        self.data=data
-       
         
+        self.data=data
+         
     def change_values_of_feature(self,value,new_value,feature_name):
     
         self.data.X_train[feature_name].replace(value,new_value,inplace=True)
